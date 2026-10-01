@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f1f5f0">
+  <title>My First Chatbot</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <main class="chat-shell">
+    <header class="chat-header">
+      <div class="header-mark" aria-hidden="true">M</div>
+      <div>
+        <p class="eyebrow">A little conversation</p>
+        <h1>My First Chatbot</h1>
+      </div>
+      <span class="online-indicator" title="Ready to chat" aria-label="Ready to chat"></span>
+    </header>
+
+    <section class="chat-content" aria-label="Chat conversation">
+      <div class="date-label"><span>Today</span></div>
+      <!-- New user and bot messages are added here by JavaScript. -->
+      <div id="chat-messages" class="chat-messages" role="log" aria-live="polite" aria-relevant="additions">
+        <article class="message-row bot-row">
+          <div class="message-avatar" aria-hidden="true">M</div>
+          <p class="message-bubble bot-bubble">Hi! Ask me something to get started.</p>
+        </article>
+      </div>
+    </section>
+
+    <form id="chat-form" class="chat-form">
+      <label class="visually-hidden" for="message-input">Your message</label>
+      <input
+        id="message-input"
+        name="message"
+        type="text"
+        maxlength="500"
+        placeholder="Write a message..."
+        autocomplete="off"
+        required
+      >
+      <button id="send-button" type="submit">
+        <span>Send</span>
+        <span class="send-arrow" aria-hidden="true">&#8594;</span>
+      </button>
+    </form>
+    <p class="form-note">Messages stay in this page while it is open.</p>
+  </main>
+
+  <script>
+    // Keep references to the form controls and message area.
+    const chatForm = document.querySelector("#chat-form");
+    const messageInput = document.querySelector("#message-input");
+    const sendButton = document.querySelector("#send-button");
+    const chatMessages = document.querySelector("#chat-messages");
+
+    // Add a message using textContent so typed text is displayed safely.
+    function addMessage(text, sender) {
+      const row = document.createElement("article");
+      row.className = `message-row ${sender}-row`;
+
+      if (sender === "bot") {
+        const avatar = document.createElement("div");
+        avatar.className = "message-avatar";
+        avatar.setAttribute("aria-hidden", "true");
+        avatar.textContent = "M";
+        row.appendChild(avatar);
+      }
+
+      const bubble = document.createElement("p");
+      bubble.className = `message-bubble ${sender}-bubble`;
+      bubble.textContent = text;
+      row.appendChild(bubble);
+      chatMessages.appendChild(row);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // Send the message to Flask and display the returned predefined reply.
+    chatForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const message = messageInput.value.trim();
+      if (!message) return;
+
+      addMessage(message, "user");
+      messageInput.value = "";
+      messageInput.disabled = true;
+      sendButton.disabled = true;
+
+      try {
+        const response = await fetch("/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message })
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "The message could not be sent.");
+        addMessage(result.reply, "bot");
+      } catch (error) {
+        addMessage(error.message || "Sorry, something went wrong.", "bot");
+      } finally {
+        messageInput.disabled = false;
+        sendButton.disabled = false;
+        messageInput.focus();
+      }
+    });
+  </script>
+</body>
+</html>
