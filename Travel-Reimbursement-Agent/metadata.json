@@ -1,0 +1,6 @@
+{
+  "name": "Travel Reimbursement Approval Agent",
+  "description": "Autonomous GenAI Agent for auditing corporate travel reimbursement claims against policy, receipts, per-diem limits, and approval thresholds.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
